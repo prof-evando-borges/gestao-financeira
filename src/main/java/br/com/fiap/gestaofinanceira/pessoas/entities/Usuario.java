@@ -1,8 +1,10 @@
 package br.com.fiap.gestaofinanceira.pessoas.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.util.ArrayList;
@@ -17,25 +19,27 @@ public class Usuario {
     @Column(name = "ID", length = 36, nullable = false)
     private String id;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "O nome é obrigatório")
+    @Size(max = 100, message = "O nome deve ter no máximo 100 caracteres")
     @Column(name = "NOME", length = 100, nullable = false)
     private String nome;
 
-    @NotBlank
-    @Size(min = 11, max = 11)
+    @NotBlank(message = "O CPF é obrigatório")
+    @Pattern(regexp = "\\d{11}", message = "O CPF deve ter 11 dígitos, somente números")
     @Column(name = "CPF", length = 11, nullable = false, unique = true)
     private String cpf;
 
-    @Email
-    @Size(max = 150)
+    @Email(message = "O e-mail informado não é válido")
+    @Size(max = 150, message = "O e-mail deve ter no máximo 150 caracteres")
     @Column(name = "EMAIL", length = 150)
     private String email;
 
-    @Size(max = 20)
+    @Pattern(regexp = "\\d{10,11}", message = "O telefone deve ter 10 ou 11 dígitos (DDD + número), somente números")
     @Column(name = "TELEFONE", length = 20)
     private String telefone;
 
+    // Lado @OneToMany: @JsonIgnore evita o loop Usuario -> Endereco -> Usuario no JSON
+    @JsonIgnore
     @OneToMany(
             mappedBy = "usuario",
             cascade = CascadeType.ALL,
@@ -94,4 +98,3 @@ public class Usuario {
         this.enderecos = enderecos;
     }
 }
-

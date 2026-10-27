@@ -2,6 +2,8 @@ package br.com.fiap.gestaofinanceira.pessoas.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Entity
@@ -13,40 +15,43 @@ public class Endereco {
     @Column(name = "ID", length = 36, nullable = false)
     private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    // EAGER: o usuario aparece no JSON e o open-in-view esta desligado.
+    // No cadastro basta mandar "usuario": { "id": "..." }
+    @NotNull(message = "O usuário do endereço é obrigatório")
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "ID_USUARIO", nullable = false)
     private Usuario usuario;
 
-    @NotBlank
-    @Size(min = 8, max = 8)
+    @NotBlank(message = "O CEP é obrigatório")
+    @Pattern(regexp = "\\d{8}", message = "O CEP deve ter 8 dígitos, somente números")
     @Column(name = "CEP", length = 8, nullable = false)
     private String cep;
 
-    @NotBlank
-    @Size(max = 150)
+    @NotBlank(message = "O logradouro é obrigatório")
+    @Size(max = 150, message = "O logradouro deve ter no máximo 150 caracteres")
     @Column(name = "LOGRADOURO", length = 150, nullable = false)
     private String logradouro;
 
-    @NotBlank
-    @Size(max = 10)
+    @NotBlank(message = "O número é obrigatório")
+    @Size(max = 10, message = "O número deve ter no máximo 10 caracteres")
     @Column(name = "NUMERO", length = 10, nullable = false)
     private String numero;
 
-    @Size(max = 100)
+    @Size(max = 100, message = "O complemento deve ter no máximo 100 caracteres")
     @Column(name = "COMPLEMENTO", length = 100)
     private String complemento;
 
-    @Size(max = 100)
+    @Size(max = 100, message = "O bairro deve ter no máximo 100 caracteres")
     @Column(name = "BAIRRO", length = 100)
     private String bairro;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "A cidade é obrigatória")
+    @Size(max = 100, message = "A cidade deve ter no máximo 100 caracteres")
     @Column(name = "CIDADE", length = 100, nullable = false)
     private String cidade;
 
-    @NotBlank
-    @Size(min = 2, max = 2)
+    @NotBlank(message = "O estado é obrigatório")
+    @Pattern(regexp = "[A-Za-z]{2}", message = "O estado deve ser a sigla da UF com 2 letras (ex.: SP)")
     @Column(name = "ESTADO", length = 2, nullable = false)
     private String estado;
 
@@ -125,5 +130,3 @@ public class Endereco {
         this.estado = estado;
     }
 }
-
-
