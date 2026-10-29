@@ -11,6 +11,9 @@
  *
  * <p>Estrutura interna sugerida: {@code controller}, {@code service}, {@code repository},
  * {@code entity} e {@code dto}, todos dentro deste pacote. O grupo só altera arquivos deste
+ *  *
+ *  * <p>Este pacote reúne os componentes responsáveis pelas funcionalidades
+ *  * relacionadas à Educação Financeira.</p>
  * pacote e do seu script; outros módulos são referenciados apenas pelo id (ex.: {@code Long idPessoa}).</p>
  */
 package br.com.fiap.gestaofinanceira.educacao;
