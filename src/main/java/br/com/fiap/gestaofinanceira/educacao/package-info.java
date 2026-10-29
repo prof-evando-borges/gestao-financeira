@@ -14,6 +14,6 @@
  *  *
  *  * <p>Este pacote reúne os componentes responsáveis pelas funcionalidades
  *  * relacionadas à Educação Financeira.</p>
- * pacote e do seu script; outros módulos são referenciados apenas pelo id (ex.: {@code Long idPessoa}).</p>
+ * pacote e do seu script; outros módulos são referenciados apenas pelo id (ex.: {@code Long idPessoa}). </p>
  */
 package br.com.fiap.gestaofinanceira.educacao;
