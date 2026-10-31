@@ -1,0 +1,1547 @@
+{
+  "info": {
+    "_postman_id": "bcf6b5a5-4c2a-5db8-b1de-88ee571beadb",
+    "name": "04 - Investimentos",
+    "description": "Collection do módulo 04 - Investimentos (Grupo 6). Rode a pasta inteira no Runner, na ordem: os ids são guardados automaticamente e a última pasta apaga o que foi criado, então dá para rodar de novo.\n\nANTES DE RODAR: as variáveis idPessoa, idPessoaOutra, idConta e idContaOutraPessoa precisam apontar para registros que existam nos módulos de Pessoas e Contas. Cadastre pela API desses módulos ou rode no SQL Developer (ajuste se o script de Contas da sua development ainda não tiver TB_CTA_BANCO: tire a linha do banco e a coluna ID_BANCO):\n\nINSERT INTO TB_PES_USUARIO (ID, NOME, CPF, EMAIL) VALUES ('11111111-1111-1111-1111-111111111111', 'Investidora Teste', '11122233344', 'investidora@teste.com');\nINSERT INTO TB_PES_USUARIO (ID, NOME, CPF, EMAIL) VALUES ('22222222-2222-2222-2222-222222222222', 'Outra Pessoa', '55566677788', 'outra@teste.com');\nINSERT INTO TB_CTA_BANCO (ID, CODIGO, NOME) VALUES ('99999999-9999-9999-9999-999999999999', '999', 'Banco Teste');\nINSERT INTO TB_CTA_CONTA (ID, ID_USUARIO, ID_BANCO, NUMERO_CONTA, AGENCIA, TIPO, SALDO, STATUS, DATA_ABERTURA) VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', '99999999-9999-9999-9999-999999999999', '12345-6', '0001', 'CORRENTE', 10000, 'ATIVA', DATE '2025-01-10');\nINSERT INTO TB_CTA_CONTA (ID, ID_USUARIO, ID_BANCO, NUMERO_CONTA, AGENCIA, TIPO, SALDO, STATUS, DATA_ABERTURA) VALUES ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '22222222-2222-2222-2222-222222222222', '99999999-9999-9999-9999-999999999999', '65432-1', '0001', 'CORRENTE', 500, 'ATIVA', DATE '2025-01-10');\nCOMMIT;\n\nCasos de erro cobertos: 400 (corpo inválido e parâmetro inválido), 404 (id inexistente, inclusive de Pessoas e Contas) e 422 (regras de negócio do módulo).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Investidores",
+      "item": [
+        {
+          "name": "Cadastrar investidor (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set(\"idInvestidor\", pm.response.json().id);",
+                  "pm.test(\"Gera id UUID\", function () { pm.expect(pm.response.json().id).to.have.lengthOf(36); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"perfil\": \"MODERADO\",\n  \"objetivo\": \"Reserva para intercâmbio\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar com dados inválidos (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Lista os campos inválidos\", function () { const c = pm.response.json().campos; pm.expect(c).to.have.property(\"idPessoa\"); pm.expect(c).to.have.property(\"perfil\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"\",\n  \"objetivo\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar com pessoa inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"00000000-0000-0000-0000-000000000000\",\n  \"perfil\": \"ARROJADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar segundo perfil para a mesma pessoa (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"perfil\": \"ARROJADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listar investidores (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar por perfil (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Traz o investidor cadastrado\", function () { pm.expect(pm.response.json().map(i => i.id)).to.include(pm.collectionVariables.get(\"idInvestidor\")); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores?perfil=MODERADO",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores"
+              ],
+              "query": [
+                {
+                  "key": "perfil",
+                  "value": "MODERADO"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar por perfil inválido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores?perfil=AGRESSIVO",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores"
+              ],
+              "query": [
+                {
+                  "key": "perfil",
+                  "value": "AGRESSIVO"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar investidor por id (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores/{{idInvestidor}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores",
+                "{{idInvestidor}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar investidor inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar investidor (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Objetivo atualizado\", function () { pm.expect(pm.response.json().objetivo).to.eql(\"Aposentadoria\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores/{{idInvestidor}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores",
+                "{{idInvestidor}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"perfil\": \"MODERADO\",\n  \"objetivo\": \"Aposentadoria\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar trocando a pessoa (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores/{{idInvestidor}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores",
+                "{{idInvestidor}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoaOutra}}\",\n  \"perfil\": \"MODERADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Aplicações",
+      "item": [
+        {
+          "name": "Cadastrar aplicação em fundos (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set(\"idAplicacao\", pm.response.json().id);",
+                  "pm.test(\"Nasce ATIVA\", function () { pm.expect(pm.response.json().status).to.eql(\"ATIVA\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {\n    \"id\": \"{{idInvestidor}}\"\n  },\n  \"idConta\": \"{{idConta}}\",\n  \"descricao\": \"Fundo multimercado\",\n  \"tipo\": \"FUNDOS\",\n  \"valorAplicado\": 1000.0,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2026-10-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar aplicação em renda fixa (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set(\"idAplicacao2\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {\n    \"id\": \"{{idInvestidor}}\"\n  },\n  \"idConta\": \"{{idConta}}\",\n  \"descricao\": \"CDB 110% do CDI\",\n  \"tipo\": \"RENDA_FIXA\",\n  \"valorAplicado\": 500.0,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2026-10-01\",\n  \"dataVencimento\": \"2028-10-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar com dados inválidos (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Lista os campos inválidos\", function () { const c = pm.response.json().campos; [\"descricao\", \"valorAplicado\", \"dataAplicacao\", \"idInvestidorInformado\"].forEach(k => pm.expect(c).to.have.property(k)); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {},\n  \"idConta\": \"{{idConta}}\",\n  \"descricao\": \"\",\n  \"tipo\": \"FUNDOS\",\n  \"valorAplicado\": -100,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2099-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar com investidor inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {\n    \"id\": \"00000000-0000-0000-0000-000000000000\"\n  },\n  \"idConta\": \"{{idConta}}\",\n  \"descricao\": \"Fundo multimercado\",\n  \"tipo\": \"FUNDOS\",\n  \"valorAplicado\": 1000.0,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2026-10-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar com conta inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {\n    \"id\": \"{{idInvestidor}}\"\n  },\n  \"idConta\": \"00000000-0000-0000-0000-000000000000\",\n  \"descricao\": \"Fundo multimercado\",\n  \"tipo\": \"FUNDOS\",\n  \"valorAplicado\": 1000.0,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2026-10-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar tipo acima do perfil (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ]
+            },
+            "description": "Perfil MODERADO aceita risco até MEDIO; CRIPTOMOEDAS é risco ALTO.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {\n    \"id\": \"{{idInvestidor}}\"\n  },\n  \"idConta\": \"{{idConta}}\",\n  \"descricao\": \"Bitcoin\",\n  \"tipo\": \"CRIPTOMOEDAS\",\n  \"valorAplicado\": 1000.0,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2026-10-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar com vencimento antes da aplicação (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {\n    \"id\": \"{{idInvestidor}}\"\n  },\n  \"idConta\": \"{{idConta}}\",\n  \"descricao\": \"CDB\",\n  \"tipo\": \"RENDA_FIXA\",\n  \"valorAplicado\": 1000.0,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2026-10-01\",\n  \"dataVencimento\": \"2026-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar com conta de outra pessoa (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {\n    \"id\": \"{{idInvestidor}}\"\n  },\n  \"idConta\": \"{{idContaOutraPessoa}}\",\n  \"descricao\": \"Fundo multimercado\",\n  \"tipo\": \"FUNDOS\",\n  \"valorAplicado\": 1000.0,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2026-10-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listar aplicações (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar aplicações do investidor (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Duas aplicações do investidor\", function () { pm.expect(pm.response.json()).to.have.lengthOf(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes?idInvestidor={{idInvestidor}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ],
+              "query": [
+                {
+                  "key": "idInvestidor",
+                  "value": "{{idInvestidor}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar por tipo (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes?tipo=FUNDOS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "FUNDOS"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar por tipo inválido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes?tipo=IMOVEIS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "IMOVEIS"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar aplicação por id (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Traz o investidor junto\", function () { pm.expect(pm.response.json().investidor.id).to.eql(pm.collectionVariables.get(\"idInvestidor\")); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes/{{idAplicacao}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes",
+                "{{idAplicacao}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar aplicação inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Projetar rendimento em 24 meses (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"1000 a 12% a.a. por 24 meses = 1254.40\", function () { pm.expect(pm.response.json().montanteProjetado).to.eql(1254.40); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes/{{idAplicacao}}/projecao?meses=24",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes",
+                "{{idAplicacao}}",
+                "projecao"
+              ],
+              "query": [
+                {
+                  "key": "meses",
+                  "value": "24"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Projetar com prazo inválido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes/{{idAplicacao}}/projecao?meses=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes",
+                "{{idAplicacao}}",
+                "projecao"
+              ],
+              "query": [
+                {
+                  "key": "meses",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Consultar carteira do investidor (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Soma as aplicações ativas\", function () { pm.expect(pm.response.json().totalAplicado).to.eql(1500); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores/{{idInvestidor}}/carteira",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores",
+                "{{idInvestidor}}",
+                "carteira"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar aplicação (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Valor atualizado\", function () { pm.expect(pm.response.json().valorAplicado).to.eql(800); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes/{{idAplicacao2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes",
+                "{{idAplicacao2}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {\n    \"id\": \"{{idInvestidor}}\"\n  },\n  \"idConta\": \"{{idConta}}\",\n  \"descricao\": \"CDB 110% do CDI\",\n  \"tipo\": \"RENDA_FIXA\",\n  \"valorAplicado\": 800.0,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2026-10-01\",\n  \"dataVencimento\": \"2028-10-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar aplicação inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {\n    \"id\": \"{{idInvestidor}}\"\n  },\n  \"idConta\": \"{{idConta}}\",\n  \"descricao\": \"Fundo multimercado\",\n  \"tipo\": \"FUNDOS\",\n  \"valorAplicado\": 1000.0,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2026-10-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Regras e remoções",
+      "item": [
+        {
+          "name": "Mudar perfil com aplicação incompatível ativa (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores/{{idInvestidor}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores",
+                "{{idInvestidor}}"
+              ]
+            },
+            "description": "O investidor tem FUNDOS (risco MEDIO) ativo; CONSERVADOR só aceita risco BAIXO.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"perfil\": \"CONSERVADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Remover investidor com aplicações ativas (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores/{{idInvestidor}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores",
+                "{{idInvestidor}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resgatar aplicação (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Status RESGATADA\", function () { pm.expect(pm.response.json().status).to.eql(\"RESGATADA\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes/{{idAplicacao}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes",
+                "{{idAplicacao}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {\n    \"id\": \"{{idInvestidor}}\"\n  },\n  \"idConta\": \"{{idConta}}\",\n  \"descricao\": \"Fundo multimercado\",\n  \"tipo\": \"FUNDOS\",\n  \"valorAplicado\": 1000.0,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2026-10-01\",\n  \"status\": \"RESGATADA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Alterar aplicação já resgatada (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes/{{idAplicacao}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes",
+                "{{idAplicacao}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"investidor\": {\n    \"id\": \"{{idInvestidor}}\"\n  },\n  \"idConta\": \"{{idConta}}\",\n  \"descricao\": \"Fundo multimercado\",\n  \"tipo\": \"FUNDOS\",\n  \"valorAplicado\": 2000.0,\n  \"taxaAnual\": 12.0,\n  \"dataAplicacao\": \"2026-10-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Remover aplicação (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes/{{idAplicacao2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes",
+                "{{idAplicacao2}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover aplicação já removida (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/aplicacoes/{{idAplicacao2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "aplicacoes",
+                "{{idAplicacao2}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover investidor (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores/{{idInvestidor}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores",
+                "{{idInvestidor}}"
+              ]
+            },
+            "description": "Só restou a aplicação resgatada, que é removida junto com o investidor."
+          }
+        },
+        {
+          "name": "Buscar investidor removido (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/investimentos/investidores/{{idInvestidor}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "investimentos",
+                "investidores",
+                "{{idInvestidor}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "idPessoa",
+      "value": "11111111-1111-1111-1111-111111111111"
+    },
+    {
+      "key": "idPessoaOutra",
+      "value": "22222222-2222-2222-2222-222222222222"
+    },
+    {
+      "key": "idConta",
+      "value": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    },
+    {
+      "key": "idContaOutraPessoa",
+      "value": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    },
+    {
+      "key": "idInvestidor",
+      "value": ""
+    },
+    {
+      "key": "idAplicacao",
+      "value": ""
+    },
+    {
+      "key": "idAplicacao2",
+      "value": ""
+    }
+  ]
+}

@@ -1,0 +1,1465 @@
+{
+  "info": {
+    "name": "02 - Contas Bancárias",
+    "description": "Modulo 02 - Contas Bancarias (Grupo 2). Base: /api/v1/contas.\n\nAntes de rodar: preencha a variavel idUsuario com o id de um usuario que exista em TB_PES_USUARIO (modulo de Pessoas). As outras variaveis sao preenchidas pelos testes.\n\nRode as pastas na ordem (Collection Runner): cada pasta usa os ids criados na anterior e a ultima remove o que foi criado.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Bancos",
+      "item": [
+        {
+          "name": "Cadastrar banco",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Codigo aleatorio entre 900 e 999 para nao bater com os bancos iniciais",
+                  "pm.collectionVariables.set(\"codigoBanco\", String(900 + Math.floor(Math.random() * 100)));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) { pm.collectionVariables.set(\"idBanco\", pm.response.json().id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/bancos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "bancos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"{{codigoBanco}}\",\n  \"nome\": \"Banco Teste do Grupo 2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listar bancos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/bancos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "bancos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar bancos por codigo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/bancos?codigo=341",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "bancos"
+              ],
+              "query": [
+                {
+                  "key": "codigo",
+                  "value": "341"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar banco por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/bancos/{{idBanco}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "bancos",
+                "{{idBanco}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar banco",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/bancos/{{idBanco}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "bancos",
+                "{{idBanco}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"{{codigoBanco}}\",\n  \"nome\": \"Banco Teste do Grupo 2 (atualizado)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "[400] Cadastrar banco com codigo invalido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/bancos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "bancos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"12\",\n  \"nome\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "[400] Buscar bancos com codigo invalido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/bancos?codigo=ab",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "bancos"
+              ],
+              "query": [
+                {
+                  "key": "codigo",
+                  "value": "ab"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[404] Buscar banco inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/bancos/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "bancos",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            }
+          }
+        },
+        {
+          "name": "[422] Cadastrar banco com codigo repetido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/bancos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "bancos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"341\",\n  \"nome\": \"Itau de novo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contas bancarias",
+      "item": [
+        {
+          "name": "Cadastrar conta corrente",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Numero de conta aleatorio para a collection poder rodar varias vezes",
+                  "pm.collectionVariables.set(\"numeroConta\", String(Math.floor(10000000 + Math.random() * 89999999)) + \"-1\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) { pm.collectionVariables.set(\"idConta\", pm.response.json().id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": \"{{idUsuario}}\",\n  \"banco\": {\n    \"id\": \"{{idBanco}}\"\n  },\n  \"agencia\": \"0001\",\n  \"numeroConta\": \"{{numeroConta}}\",\n  \"tipo\": \"CORRENTE\",\n  \"saldo\": 0.0,\n  \"limiteChequeEspecial\": 500.0,\n  \"taxaRendimentoMensal\": null,\n  \"status\": \"ATIVA\",\n  \"dataAbertura\": \"2026-01-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listar contas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar contas do usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias?idUsuario={{idUsuario}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias"
+              ],
+              "query": [
+                {
+                  "key": "idUsuario",
+                  "value": "{{idUsuario}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar contas por status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias?status=ATIVA",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ATIVA"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar conta por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias/{{idConta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias",
+                "{{idConta}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar conta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias/{{idConta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias",
+                "{{idConta}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": \"{{idUsuario}}\",\n  \"banco\": {\n    \"id\": \"{{idBanco}}\"\n  },\n  \"agencia\": \"0001\",\n  \"numeroConta\": \"{{numeroConta}}\",\n  \"tipo\": \"CORRENTE\",\n  \"saldo\": 0.0,\n  \"limiteChequeEspecial\": 1000.0,\n  \"taxaRendimentoMensal\": null,\n  \"status\": \"ATIVA\",\n  \"dataAbertura\": \"2026-01-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "[400] Cadastrar conta sem campos obrigatorios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": \"\",\n  \"agencia\": \"ab\",\n  \"saldo\": 0.0,\n  \"dataAbertura\": \"2099-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "[400] Listar contas com status invalido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias?status=FECHADA",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "FECHADA"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[404] Buscar conta inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            }
+          }
+        },
+        {
+          "name": "[404] Cadastrar conta com usuario inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": \"00000000-0000-0000-0000-000000000000\",\n  \"banco\": {\n    \"id\": \"{{idBanco}}\"\n  },\n  \"agencia\": \"0001\",\n  \"numeroConta\": \"99999999-9\",\n  \"tipo\": \"CORRENTE\",\n  \"saldo\": 0.0,\n  \"limiteChequeEspecial\": 500.0,\n  \"taxaRendimentoMensal\": null,\n  \"status\": \"ATIVA\",\n  \"dataAbertura\": \"2026-01-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "O titular e conferido no modulo de Pessoas pelo UsuarioService.buscarPorId."
+          }
+        },
+        {
+          "name": "[422] Cadastrar conta repetida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": \"{{idUsuario}}\",\n  \"banco\": {\n    \"id\": \"{{idBanco}}\"\n  },\n  \"agencia\": \"0001\",\n  \"numeroConta\": \"{{numeroConta}}\",\n  \"tipo\": \"CORRENTE\",\n  \"saldo\": 0.0,\n  \"limiteChequeEspecial\": 500.0,\n  \"taxaRendimentoMensal\": null,\n  \"status\": \"ATIVA\",\n  \"dataAbertura\": \"2026-01-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "[422] Cadastrar poupanca com cheque especial",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": \"{{idUsuario}}\",\n  \"banco\": {\n    \"id\": \"{{idBanco}}\"\n  },\n  \"agencia\": \"0001\",\n  \"numeroConta\": \"88888888-8\",\n  \"tipo\": \"POUPANCA\",\n  \"saldo\": 0.0,\n  \"limiteChequeEspecial\": 500.0,\n  \"taxaRendimentoMensal\": 0.5,\n  \"status\": \"ATIVA\",\n  \"dataAbertura\": \"2026-01-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "[422] Remover banco com contas vinculadas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/bancos/{{idBanco}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "bancos",
+                "{{idBanco}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chaves Pix",
+      "item": [
+        {
+          "name": "Cadastrar chave Pix",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"emailChave\", \"grupo2.\" + Date.now() + \"@email.com\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) { pm.collectionVariables.set(\"idChavePix\", pm.response.json().id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/chaves-pix",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "chaves-pix"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conta\": {\n    \"id\": \"{{idConta}}\"\n  },\n  \"tipo\": \"EMAIL\",\n  \"valor\": \"{{emailChave}}\",\n  \"ativa\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listar chaves Pix",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/chaves-pix",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "chaves-pix"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar chaves Pix da conta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/chaves-pix?idConta={{idConta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "chaves-pix"
+              ],
+              "query": [
+                {
+                  "key": "idConta",
+                  "value": "{{idConta}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar chave Pix por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/chaves-pix/{{idChavePix}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "chaves-pix",
+                "{{idChavePix}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar chave Pix",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/chaves-pix/{{idChavePix}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "chaves-pix",
+                "{{idChavePix}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conta\": {\n    \"id\": \"{{idConta}}\"\n  },\n  \"tipo\": \"EMAIL\",\n  \"valor\": \"{{emailChave}}\",\n  \"ativa\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "[400] Cadastrar chave Pix sem valor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/chaves-pix",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "chaves-pix"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conta\": {\n    \"id\": \"{{idConta}}\"\n  },\n  \"tipo\": \"EMAIL\",\n  \"valor\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "[404] Buscar chave Pix inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/chaves-pix/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "chaves-pix",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            }
+          }
+        },
+        {
+          "name": "[422] Cadastrar chave Pix repetida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/chaves-pix",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "chaves-pix"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conta\": {\n    \"id\": \"{{idConta}}\"\n  },\n  \"tipo\": \"EMAIL\",\n  \"valor\": \"{{emailChave}}\",\n  \"ativa\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "[422] Cadastrar chave CPF que nao e do titular",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/chaves-pix",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "chaves-pix"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conta\": {\n    \"id\": \"{{idConta}}\"\n  },\n  \"tipo\": \"CPF\",\n  \"valor\": \"00000000191\",\n  \"ativa\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Remover chave Pix",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/chaves-pix/{{idChavePix}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "chaves-pix",
+                "{{idChavePix}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Encerramento e limpeza",
+      "item": [
+        {
+          "name": "Encerrar conta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias/{{idConta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias",
+                "{{idConta}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": \"{{idUsuario}}\",\n  \"banco\": {\n    \"id\": \"{{idBanco}}\"\n  },\n  \"agencia\": \"0001\",\n  \"numeroConta\": \"{{numeroConta}}\",\n  \"tipo\": \"CORRENTE\",\n  \"saldo\": 0.0,\n  \"limiteChequeEspecial\": 1000.0,\n  \"taxaRendimentoMensal\": null,\n  \"status\": \"ENCERRADA\",\n  \"dataAbertura\": \"2026-01-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "[422] Alterar conta encerrada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias/{{idConta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias",
+                "{{idConta}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": \"{{idUsuario}}\",\n  \"banco\": {\n    \"id\": \"{{idBanco}}\"\n  },\n  \"agencia\": \"0001\",\n  \"numeroConta\": \"{{numeroConta}}\",\n  \"tipo\": \"CORRENTE\",\n  \"saldo\": 0.0,\n  \"limiteChequeEspecial\": 2000.0,\n  \"taxaRendimentoMensal\": null,\n  \"status\": \"ATIVA\",\n  \"dataAbertura\": \"2026-01-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Remover conta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/contas-bancarias/{{idConta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "contas-bancarias",
+                "{{idConta}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remover banco",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/contas/bancos/{{idBanco}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contas",
+                "bancos",
+                "{{idBanco}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "idUsuario",
+      "value": "COLE_AQUI_O_ID_DE_UM_USUARIO"
+    },
+    {
+      "key": "codigoBanco",
+      "value": ""
+    },
+    {
+      "key": "idBanco",
+      "value": ""
+    },
+    {
+      "key": "numeroConta",
+      "value": ""
+    },
+    {
+      "key": "idConta",
+      "value": ""
+    },
+    {
+      "key": "emailChave",
+      "value": ""
+    },
+    {
+      "key": "idChavePix",
+      "value": ""
+    }
+  ]
+}
