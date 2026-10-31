@@ -1,0 +1,2629 @@
+{
+  "info": {
+    "name": "08 - Controle de Notificações",
+    "description": "Módulo 08 (Grupo 3) - /api/v1/notificacoes. Rode as pastas em ordem (0 a 7): os ids criados ficam salvos nas variáveis da collection. Precisa do módulo 01 (Pessoas) para criar a pessoa de teste e dos canais inseridos pelo script 08-notificacoes.sql. A notificação lida fica no banco de propósito: ela faz parte do histórico e não pode ser removida (regra de negócio).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0 - Preparação (módulo 01 - Pessoas)",
+      "item": [
+        {
+          "name": "Cadastrar pessoa de teste (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Pessoa Notificações Teste\",\n  \"cpf\": \"{{cpf}}\",\n  \"email\": \"pessoa.notificacoes@email.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// CPF aleatorio de 11 digitos para poder rodar a collection varias vezes",
+                  "let cpf = \"\"; for (let i = 0; i < 11; i++) { cpf += Math.floor(Math.random() * 10); }",
+                  "pm.collectionVariables.set(\"cpf\", cpf);",
+                  "// sufixo aleatorio para os codigos de modelo nao repetirem",
+                  "pm.collectionVariables.set(\"sufixo\", Math.floor(Math.random() * 1000000));",
+                  "// datas para os agendamentos (aaaa-mm-ddThh:mm:ss)",
+                  "const fmt = (d) => d.toISOString().slice(0, 19);",
+                  "pm.collectionVariables.set(\"amanha\", fmt(new Date(Date.now() + 24 * 60 * 60 * 1000)));",
+                  "pm.collectionVariables.set(\"ontem\", fmt(new Date(Date.now() - 24 * 60 * 60 * 1000)));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"idPessoa\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1 - Canais",
+      "item": [
+        {
+          "name": "Listar canais (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devolve uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));",
+                  "// guarda o id de cada canal criado pelo script 08-notificacoes.sql",
+                  "pm.response.json().forEach(c => pm.collectionVariables.set(\"idCanal\" + c.nome, c.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar canais ativos (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais?ativo=true"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devolve uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));",
+                  "pm.test(\"Só canais ativos\", () => pm.response.json().forEach(c => pm.expect(c.ativo).to.eql(true)));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar canais com filtro inválido - parâmetro inválido (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais?ativo=talvez"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar canal por id (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais/{{idCanalEMAIL}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"nome = EMAIL\", () => pm.expect(pm.response.json().nome).to.eql(\"EMAIL\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar canal inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar canal que já existe - regra de negócio (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"EMAIL\",\n  \"descricao\": \"Outro canal de e-mail\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar canal sem nome - dado inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Canal sem nome\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Aponta o campo nome\", () => pm.expect(pm.response.json().campos).to.have.property(\"nome\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar canal com nome fora da lista - corpo inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"FAX\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar canal (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais/{{idCanalAPP}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"APP\",\n  \"descricao\": \"Caixa de entrada do aplicativo\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"descricao = Caixa de entrada do aplicativo\", () => pm.expect(pm.response.json().descricao).to.eql(\"Caixa de entrada do aplicativo\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar canal com o nome de outro canal - regra de negócio (422)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais/{{idCanalAPP}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"EMAIL\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar canal inexistente (404)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais/00000000-0000-0000-0000-000000000000",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"APP\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover canal inexistente (404)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 - Modelos",
+      "item": [
+        {
+          "name": "Cadastrar modelo de saldo baixo (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"SALDO_BAIXO_{{sufixo}}\",\n  \"titulo\": \"Seu saldo está baixo\",\n  \"conteudo\": \"Olá {nome}, o saldo da sua conta ficou abaixo de {valor}.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"idModelo\", pm.response.json().id);",
+                  "pm.test(\"Tem data de criação\", () => pm.expect(pm.response.json().criadoEm).to.be.a(\"string\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar modelo de parcela (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"PARCELA_VENCENDO_{{sufixo}}\",\n  \"titulo\": \"Parcela vencendo\",\n  \"conteudo\": \"Olá {nome}, a parcela {numero} vence em {dias} dias.\",\n  \"tipoEvento\": \"PARCELA_DIVIDA\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"idModeloParcela\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar modelo com código repetido - regra de negócio (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"SALDO_BAIXO_{{sufixo}}\",\n  \"titulo\": \"Repetido\",\n  \"conteudo\": \"Texto\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar modelo sem título e com código minúsculo - dado inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"saldo baixo\",\n  \"conteudo\": \"Texto\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Aponta o campo codigo\", () => pm.expect(pm.response.json().campos).to.have.property(\"codigo\"));",
+                  "pm.test(\"Aponta o campo titulo\", () => pm.expect(pm.response.json().campos).to.have.property(\"titulo\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar modelos (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devolve uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar modelos por tipo de evento (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos?tipoEvento=SALDO_BAIXO"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devolve uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));",
+                  "pm.test(\"Só SALDO_BAIXO\", () => pm.response.json().forEach(m => pm.expect(m.tipoEvento).to.eql(\"SALDO_BAIXO\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar modelos por evento inexistente - parâmetro inválido (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos?tipoEvento=ANIVERSARIO"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar modelo por id (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos/{{idModelo}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"tipoEvento = SALDO_BAIXO\", () => pm.expect(pm.response.json().tipoEvento).to.eql(\"SALDO_BAIXO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar modelo inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar modelo (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos/{{idModelo}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"SALDO_BAIXO_{{sufixo}}\",\n  \"titulo\": \"Atenção: saldo baixo\",\n  \"conteudo\": \"Olá {nome}, o saldo da conta {conta} ficou abaixo de {valor}.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"titulo = Atenção: saldo baixo\", () => pm.expect(pm.response.json().titulo).to.eql(\"Aten\\u00e7\\u00e3o: saldo baixo\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar modelo com o código de outro modelo - regra de negócio (422)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos/{{idModeloParcela}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"SALDO_BAIXO_{{sufixo}}\",\n  \"titulo\": \"Parcela vencendo\",\n  \"conteudo\": \"Texto\",\n  \"tipoEvento\": \"PARCELA_DIVIDA\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar modelo inexistente (404)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos/00000000-0000-0000-0000-000000000000",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"QUALQUER\",\n  \"titulo\": \"Qualquer\",\n  \"conteudo\": \"Texto\",\n  \"tipoEvento\": \"SISTEMA\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 - Preferências",
+      "item": [
+        {
+          "name": "Cadastrar preferência por e-mail (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"habilitado\": true,\n  \"antecedenciaDias\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"idPreferencia\", pm.response.json().id);",
+                  "pm.test(\"Canal aparece no JSON\", () => pm.expect(pm.response.json().canal.nome).to.eql(\"EMAIL\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar preferência desabilitada por SMS (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalSMS}}\"\n  },\n  \"tipoEvento\": \"SISTEMA\",\n  \"habilitado\": false,\n  \"antecedenciaDias\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"idPreferenciaSms\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar preferência repetida - regra de negócio (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"habilitado\": true,\n  \"antecedenciaDias\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar preferência sem evento e com antecedência de 45 dias - dado inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"habilitado\": true,\n  \"antecedenciaDias\": 45\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Aponta o campo tipoEvento\", () => pm.expect(pm.response.json().campos).to.have.property(\"tipoEvento\"));",
+                  "pm.test(\"Aponta o campo antecedenciaDias\", () => pm.expect(pm.response.json().campos).to.have.property(\"antecedenciaDias\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar preferência para pessoa inexistente (módulo Pessoas) (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"00000000-0000-0000-0000-000000000000\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"habilitado\": true,\n  \"antecedenciaDias\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar preferência com canal inexistente (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"00000000-0000-0000-0000-000000000000\"\n  },\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"habilitado\": true,\n  \"antecedenciaDias\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Desativar canal PUSH (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais/{{idCanalPUSH}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"PUSH\",\n  \"descricao\": \"Notificacao push no celular\",\n  \"ativo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"ativo = False\", () => pm.expect(pm.response.json().ativo).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar preferência habilitada em canal desativado - regra de negócio (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalPUSH}}\"\n  },\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"habilitado\": true,\n  \"antecedenciaDias\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reativar canal PUSH (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais/{{idCanalPUSH}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"PUSH\",\n  \"descricao\": \"Notificacao push no celular\",\n  \"ativo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"ativo = True\", () => pm.expect(pm.response.json().ativo).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar preferências (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devolve uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar preferências da pessoa (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias?idPessoa={{idPessoa}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devolve uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));",
+                  "pm.test(\"Duas preferências\", () => pm.expect(pm.response.json().length).to.eql(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar preferências de pessoa inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias?idPessoa=00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar preferência por id (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias/{{idPreferencia}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"tipoEvento = SALDO_BAIXO\", () => pm.expect(pm.response.json().tipoEvento).to.eql(\"SALDO_BAIXO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar preferência inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar preferência (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias/{{idPreferencia}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"habilitado\": true,\n  \"antecedenciaDias\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"antecedenciaDias = 5\", () => pm.expect(pm.response.json().antecedenciaDias).to.eql(5));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar preferência trocando a pessoa - regra de negócio (422)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias/{{idPreferencia}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"00000000-0000-0000-0000-000000000000\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"habilitado\": true,\n  \"antecedenciaDias\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar preferência inexistente (404)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias/00000000-0000-0000-0000-000000000000",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"habilitado\": true,\n  \"antecedenciaDias\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 - Notificações",
+      "item": [
+        {
+          "name": "Cadastrar notificação (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"modelo\": {\n    \"id\": \"{{idModelo}}\"\n  },\n  \"titulo\": \"Seu saldo está baixo\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"ALTA\",\n  \"origem\": \"CONTAS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"idNotificacao\", pm.response.json().id);",
+                  "pm.test(\"status = PENDENTE\", () => pm.expect(pm.response.json().status).to.eql(\"PENDENTE\"));",
+                  "pm.test(\"Modelo e canal aparecem no JSON\", () => { const n = pm.response.json(); pm.expect(n.canal.nome).to.eql(\"EMAIL\"); pm.expect(n.modelo.id).to.eql(pm.collectionVariables.get(\"idModelo\")); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar notificação agendada para amanhã (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalAPP}}\"\n  },\n  \"titulo\": \"Manutenção programada\",\n  \"mensagem\": \"O aplicativo ficará fora do ar amanhã das 2h às 4h.\",\n  \"tipoEvento\": \"SISTEMA\",\n  \"prioridade\": \"BAIXA\",\n  \"origem\": \"NOTIFICACOES\",\n  \"agendadaPara\": \"{{amanha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"idNotificacaoAgendada\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar notificação sem título e sem canal - dado inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"modelo\": {\n    \"id\": \"{{idModelo}}\"\n  },\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"ALTA\",\n  \"origem\": \"CONTAS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Aponta o campo titulo\", () => pm.expect(pm.response.json().campos).to.have.property(\"titulo\"));",
+                  "pm.test(\"Aponta o campo canal\", () => pm.expect(pm.response.json().campos).to.have.property(\"canal\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar notificação com prioridade fora da lista - corpo inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"modelo\": {\n    \"id\": \"{{idModelo}}\"\n  },\n  \"titulo\": \"Seu saldo está baixo\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"URGENTISSIMA\",\n  \"origem\": \"CONTAS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar notificação para pessoa inexistente (módulo Pessoas) (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"00000000-0000-0000-0000-000000000000\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"modelo\": {\n    \"id\": \"{{idModelo}}\"\n  },\n  \"titulo\": \"Seu saldo está baixo\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"ALTA\",\n  \"origem\": \"CONTAS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar notificação com conta de origem inexistente (módulo Contas) (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"modelo\": {\n    \"id\": \"{{idModelo}}\"\n  },\n  \"titulo\": \"Seu saldo está baixo\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"ALTA\",\n  \"origem\": \"CONTAS\",\n  \"idReferencia\": \"00000000-0000-0000-0000-000000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar notificação com canal inexistente (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"00000000-0000-0000-0000-000000000000\"\n  },\n  \"modelo\": {\n    \"id\": \"{{idModelo}}\"\n  },\n  \"titulo\": \"Seu saldo está baixo\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"ALTA\",\n  \"origem\": \"CONTAS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar pelo canal que a pessoa desabilitou - regra de negócio (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalSMS}}\"\n  },\n  \"titulo\": \"Seu saldo está baixo\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SISTEMA\",\n  \"prioridade\": \"ALTA\",\n  \"origem\": \"NOTIFICACOES\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar com modelo de outro evento - regra de negócio (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"modelo\": {\n    \"id\": \"{{idModeloParcela}}\"\n  },\n  \"titulo\": \"Seu saldo está baixo\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"ALTA\",\n  \"origem\": \"CONTAS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar agendada no passado - regra de negócio (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"modelo\": {\n    \"id\": \"{{idModelo}}\"\n  },\n  \"titulo\": \"Seu saldo está baixo\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"ALTA\",\n  \"origem\": \"CONTAS\",\n  \"agendadaPara\": \"{{ontem}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar notificações (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devolve uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar notificações da pessoa (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes?idPessoa={{idPessoa}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devolve uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));",
+                  "pm.test(\"Duas notificações\", () => pm.expect(pm.response.json().length).to.eql(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar notificações pendentes da pessoa (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes?idPessoa={{idPessoa}}&status=PENDENTE"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devolve uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));",
+                  "pm.test(\"Só PENDENTE\", () => pm.response.json().forEach(n => pm.expect(n.status).to.eql(\"PENDENTE\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar notificações por status (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes?status=PENDENTE"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devolve uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar notificações de pessoa inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes?idPessoa=00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar notificações por status inexistente - parâmetro inválido (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes?status=ARQUIVADA"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar notificação por id (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"titulo = Seu saldo está baixo\", () => pm.expect(pm.response.json().titulo).to.eql(\"Seu saldo est\\u00e1 baixo\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar notificação inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar notificação pendente (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"modelo\": {\n    \"id\": \"{{idModelo}}\"\n  },\n  \"titulo\": \"Saldo abaixo de R$ 100,00\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"MEDIA\",\n  \"origem\": \"CONTAS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"titulo = Saldo abaixo de R$ 100,00\", () => pm.expect(pm.response.json().titulo).to.eql(\"Saldo abaixo de R$ 100,00\"));",
+                  "pm.test(\"prioridade = MEDIA\", () => pm.expect(pm.response.json().prioridade).to.eql(\"MEDIA\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar notificação trocando a pessoa - regra de negócio (422)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"00000000-0000-0000-0000-000000000000\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"modelo\": {\n    \"id\": \"{{idModelo}}\"\n  },\n  \"titulo\": \"Seu saldo está baixo\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"ALTA\",\n  \"origem\": \"CONTAS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar notificação inexistente (404)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/00000000-0000-0000-0000-000000000000",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"modelo\": {\n    \"id\": \"{{idModelo}}\"\n  },\n  \"titulo\": \"Seu saldo está baixo\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"ALTA\",\n  \"origem\": \"CONTAS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 - Envios da notificação",
+      "item": [
+        {
+          "name": "Enviar notificação agendada antes do horário - regra de negócio (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacaoAgendada}}/envios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SUCESSO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar falha sem o motivo - regra de negócio (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}/envios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"FALHA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar envio sem status - dado inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}/envios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensagemErro\": \"Sem status\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Aponta o campo status\", () => pm.expect(pm.response.json().campos).to.have.property(\"status\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar envio em notificação inexistente (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/00000000-0000-0000-0000-000000000000/envios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SUCESSO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar envio com falha (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}/envios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"FALHA\",\n  \"mensagemErro\": \"Servidor de e-mail indisponível\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"numeroTentativa = 1\", () => pm.expect(pm.response.json().numeroTentativa).to.eql(1));",
+                  "pm.test(\"status = FALHA\", () => pm.expect(pm.response.json().status).to.eql(\"FALHA\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar envio com sucesso (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}/envios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SUCESSO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"numeroTentativa = 2\", () => pm.expect(pm.response.json().numeroTentativa).to.eql(2));",
+                  "pm.test(\"status = SUCESSO\", () => pm.expect(pm.response.json().status).to.eql(\"SUCESSO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Notificação fica ENVIADA depois do sucesso (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"status = ENVIADA\", () => pm.expect(pm.response.json().status).to.eql(\"ENVIADA\"));",
+                  "pm.test(\"Tem data de envio\", () => pm.expect(pm.response.json().enviadaEm).to.be.a(\"string\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar envios da notificação (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}/envios"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devolve uma lista\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));",
+                  "pm.test(\"Duas tentativas\", () => pm.expect(pm.response.json().length).to.eql(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar envios de notificação inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/00000000-0000-0000-0000-000000000000/envios"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar envio de notificação já enviada - regra de negócio (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}/envios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SUCESSO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar notificação já enviada - regra de negócio (422)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPessoa\": \"{{idPessoa}}\",\n  \"canal\": {\n    \"id\": \"{{idCanalEMAIL}}\"\n  },\n  \"modelo\": {\n    \"id\": \"{{idModelo}}\"\n  },\n  \"titulo\": \"Seu saldo está baixo\",\n  \"mensagem\": \"O saldo da sua conta ficou abaixo de R$ 100,00.\",\n  \"tipoEvento\": \"SALDO_BAIXO\",\n  \"prioridade\": \"ALTA\",\n  \"origem\": \"CONTAS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 - Status da notificação",
+      "item": [
+        {
+          "name": "Marcar notificação como lida (200)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"LIDA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"status = LIDA\", () => pm.expect(pm.response.json().status).to.eql(\"LIDA\"));",
+                  "pm.test(\"Tem data de leitura\", () => pm.expect(pm.response.json().lidaEm).to.be.a(\"string\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancelar notificação já lida - regra de negócio (422)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CANCELADA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Alterar status sem informar o status - dado inválido (400)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Aponta o campo status\", () => pm.expect(pm.response.json().campos).to.have.property(\"status\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Alterar status de notificação inexistente (404)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/00000000-0000-0000-0000-000000000000/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"LIDA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancelar notificação agendada (200)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacaoAgendada}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CANCELADA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"status = CANCELADA\", () => pm.expect(pm.response.json().status).to.eql(\"CANCELADA\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover notificação lida - regra de negócio (422)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacao}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover canal com notificações - regra de negócio (422)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/canais/{{idCanalEMAIL}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover modelo já usado - regra de negócio (422)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos/{{idModelo}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Erro do módulo de notificações\", () => pm.expect(pm.response.json().modulo).to.eql(\"notificacoes\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7 - Remoção",
+      "item": [
+        {
+          "name": "Remover notificação cancelada (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/{{idNotificacaoAgendada}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover notificação inexistente (404)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/notificacoes/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover preferência por e-mail (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias/{{idPreferencia}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover preferência por SMS (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias/{{idPreferenciaSms}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover preferência inexistente (404)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/preferencias/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover modelo sem uso (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos/{{idModeloParcela}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover modelo inexistente (404)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/notificacoes/modelos/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "cpf",
+      "value": ""
+    },
+    {
+      "key": "sufixo",
+      "value": ""
+    },
+    {
+      "key": "amanha",
+      "value": ""
+    },
+    {
+      "key": "ontem",
+      "value": ""
+    },
+    {
+      "key": "idPessoa",
+      "value": ""
+    },
+    {
+      "key": "idCanalEMAIL",
+      "value": ""
+    },
+    {
+      "key": "idCanalSMS",
+      "value": ""
+    },
+    {
+      "key": "idCanalPUSH",
+      "value": ""
+    },
+    {
+      "key": "idCanalAPP",
+      "value": ""
+    },
+    {
+      "key": "idModelo",
+      "value": ""
+    },
+    {
+      "key": "idModeloParcela",
+      "value": ""
+    },
+    {
+      "key": "idPreferencia",
+      "value": ""
+    },
+    {
+      "key": "idPreferenciaSms",
+      "value": ""
+    },
+    {
+      "key": "idNotificacao",
+      "value": ""
+    },
+    {
+      "key": "idNotificacaoAgendada",
+      "value": ""
+    }
+  ]
+}
