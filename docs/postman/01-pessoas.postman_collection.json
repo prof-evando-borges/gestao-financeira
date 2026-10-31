@@ -1,0 +1,684 @@
+{
+  "info": {
+    "name": "01 - Cadastro Pessoas",
+    "description": "Módulo 01 (Grupo 8) - /api/v1/pessoas. Rode as pastas em ordem (Usuários, Endereços, Remoção): os ids criados ficam salvos nas variáveis da collection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 - Usuários",
+      "item": [
+        {
+          "name": "Cadastrar usuário (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Gustavo Teste\",\n  \"cpf\": \"{{cpf}}\",\n  \"email\": \"gustavo.teste@email.com\",\n  \"telefone\": \"11987654321\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// gera um CPF aleatorio de 11 digitos para poder rodar a collection varias vezes",
+                  "let cpf = \"\"; for (let i = 0; i < 11; i++) { cpf += Math.floor(Math.random() * 10); }",
+                  "pm.collectionVariables.set(\"cpf\", cpf);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"idUsuario\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar usuários (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar usuário por id (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios/{{idUsuario}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar usuário por CPF (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios/busca/cpf/{{cpf}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar usuários por nome (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios/busca?nome=gustavo"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar usuário (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios/{{idUsuario}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Gustavo Teste Atualizado\",\n  \"cpf\": \"{{cpf}}\",\n  \"email\": \"gustavo.teste@email.com\",\n  \"telefone\": \"11987654321\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 400 - cadastrar usuário com dados inválidos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"\",\n  \"cpf\": \"123\",\n  \"email\": \"email-invalido\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 400 - buscar por CPF com formato inválido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios/busca/cpf/abc"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 404 - buscar usuário inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 404 - atualizar usuário inexistente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios/00000000-0000-0000-0000-000000000000",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Gustavo Teste\",\n  \"cpf\": \"{{cpf}}\",\n  \"email\": \"gustavo.teste@email.com\",\n  \"telefone\": \"11987654321\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 422 - cadastrar CPF repetido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Outro Usuario\",\n  \"cpf\": \"{{cpf}}\",\n  \"email\": \"gustavo.teste@email.com\",\n  \"telefone\": \"11987654321\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 - Endereços",
+      "item": [
+        {
+          "name": "Cadastrar endereço (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": {\n    \"id\": \"{{idUsuario}}\"\n  },\n  \"cep\": \"01310100\",\n  \"logradouro\": \"Avenida Paulista\",\n  \"numero\": \"1000\",\n  \"complemento\": \"Apto 12\",\n  \"bairro\": \"Bela Vista\",\n  \"cidade\": \"São Paulo\",\n  \"estado\": \"SP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"idEndereco\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar endereços (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar endereços do usuário (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos?idUsuario={{idUsuario}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar endereço por id (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos/{{idEndereco}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atualizar endereço (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos/{{idEndereco}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": {\n    \"id\": \"{{idUsuario}}\"\n  },\n  \"cep\": \"01310100\",\n  \"logradouro\": \"Avenida Paulista\",\n  \"numero\": \"1500\",\n  \"complemento\": \"Sala 3\",\n  \"bairro\": \"Bela Vista\",\n  \"cidade\": \"São Paulo\",\n  \"estado\": \"SP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 400 - cadastrar endereço com dados inválidos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": {\n    \"id\": \"{{idUsuario}}\"\n  },\n  \"cep\": \"123\",\n  \"logradouro\": \"\",\n  \"numero\": \"\",\n  \"cidade\": \"\",\n  \"estado\": \"SPP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 404 - cadastrar endereço com usuário inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": {\n    \"id\": \"00000000-0000-0000-0000-000000000000\"\n  },\n  \"cep\": \"01310100\",\n  \"logradouro\": \"Avenida Paulista\",\n  \"numero\": \"1000\",\n  \"complemento\": \"Apto 12\",\n  \"bairro\": \"Bela Vista\",\n  \"cidade\": \"São Paulo\",\n  \"estado\": \"SP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 404 - buscar endereço inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos/00000000-0000-0000-0000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 422 - cadastrar endereço com UF inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": {\n    \"id\": \"{{idUsuario}}\"\n  },\n  \"cep\": \"01310100\",\n  \"logradouro\": \"Avenida Paulista\",\n  \"numero\": \"1000\",\n  \"complemento\": \"Apto 12\",\n  \"bairro\": \"Bela Vista\",\n  \"cidade\": \"São Paulo\",\n  \"estado\": \"XX\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 422 - cadastrar endereço repetido (mesmo CEP e número)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": {\n    \"id\": \"{{idUsuario}}\"\n  },\n  \"cep\": \"01310100\",\n  \"logradouro\": \"Avenida Paulista\",\n  \"numero\": \"1500\",\n  \"complemento\": \"Apto 12\",\n  \"bairro\": \"Bela Vista\",\n  \"cidade\": \"São Paulo\",\n  \"estado\": \"SP\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 422 - remover usuário que ainda tem endereço",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios/{{idUsuario}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 422\", () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 - Remoção",
+      "item": [
+        {
+          "name": "Remover endereço (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos/{{idEndereco}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ERRO 404 - remover endereço já removido",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/enderecos/{{idEndereco}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remover usuário (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/pessoas/usuarios/{{idUsuario}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "cpf",
+      "value": ""
+    },
+    {
+      "key": "idUsuario",
+      "value": ""
+    },
+    {
+      "key": "idEndereco",
+      "value": ""
+    }
+  ]
+}
