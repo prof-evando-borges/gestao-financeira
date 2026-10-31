@@ -1,5 +1,6 @@
 package br.com.fiap.gestaofinanceira.transacoes.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -41,16 +42,17 @@ public class Categoria {
     @EqualsAndHashCode.Include
     private String id;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "O nome da categoria é obrigatório")
+    @Size(max = 100, message = "O nome da categoria deve ter no máximo 100 caracteres")
     @Column(name = "NOME", nullable = false, length = 100)
     private String nome;
 
-    @NotNull
+    @NotNull(message = "O tipo padrão da categoria é obrigatório (RECEITA ou DESPESA)")
     @Enumerated(EnumType.STRING)
     @Column(name = "TIPO_PADRAO", nullable = false, length = 10)
     private TipoTransacao tipoPadrao;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "categoria")
     @Builder.Default
     private List<Transacao> transacoes = new ArrayList<>();

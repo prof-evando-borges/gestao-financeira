@@ -51,35 +51,35 @@ public class Transacao {
     @EqualsAndHashCode.Include
     private String id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @NotNull(message = "A categoria é obrigatória: informe \"categoria\": { \"id\": \"...\" }")
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "ID_CATEGORIA", nullable = false)
     private Categoria categoria;
 
-    @NotBlank
-    @Size(max = 36)
+    @NotBlank(message = "O id da pessoa é obrigatório")
+    @Size(max = 36, message = "O id da pessoa deve ter no máximo 36 caracteres")
     @Column(name = "ID_PESSOA", nullable = false, length = 36)
     private String idPessoa;
 
-    @Size(max = 36)
+    @Size(max = 36, message = "O id da conta deve ter no máximo 36 caracteres")
     @Column(name = "ID_CONTA", length = 36)
     private String idConta;
 
-    @NotBlank
-    @Size(max = 150)
+    @NotBlank(message = "A descrição é obrigatória")
+    @Size(max = 150, message = "A descrição deve ter no máximo 150 caracteres")
     @Column(name = "DESCRICAO", nullable = false, length = 150)
     private String descricao;
 
-    @NotNull
-    @Positive
+    @NotNull(message = "O valor é obrigatório")
+    @Positive(message = "O valor deve ser maior que zero")
     @Column(name = "VALOR", nullable = false, precision = 15, scale = 2)
     private BigDecimal valor;
 
-    @NotNull
+    @NotNull(message = "A data da transação é obrigatória")
     @Column(name = "DATA_TRANSACAO", nullable = false)
     private LocalDate dataTransacao;
 
-    @NotNull
+    @NotNull(message = "O tipo da transação é obrigatório (RECEITA ou DESPESA)")
     @Enumerated(EnumType.STRING)
     @Column(name = "TIPO", nullable = false, length = 10)
     private TipoTransacao tipo;

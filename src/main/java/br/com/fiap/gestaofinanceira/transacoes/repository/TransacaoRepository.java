@@ -13,4 +13,6 @@ public interface TransacaoRepository extends JpaRepository<Transacao, String> {
     List<Transacao> findByTipoOrderByDataTransacao(TipoTransacao tipo);
 
     List<Transacao> findByIdPessoa(String idPessoa);
+
+    boolean existsByCategoriaId(String idCategoria);
 }
